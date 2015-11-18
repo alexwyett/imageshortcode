@@ -1,0 +1,8 @@
+name = Image shortcode
+description = Allows to use an image shortcode within body text.
+core = 7.x
+version = "7.x-0.0"
+package = OTHER
+
+dependencies[] = media
+dependencies[] = shortcode

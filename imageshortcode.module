@@ -1,0 +1,122 @@
+<?php
+
+/**
+ * Implements hook_theme()
+ *
+ * Defines the theme hooks used by the module
+ *
+ * @return array
+ */
+function imageshortcode_theme()
+{
+    return array(
+        'imageshortcode_image' => array(
+            'variables' => array(
+                'image' => null,
+                'alt' => '',
+                'title' => '',
+                'align' => imageshortcode_default_image_alignment(),
+                'imagestyle' => imageshortcode_default_image_style()
+            ),
+            'template' => 'imageshortcode_image'
+        )
+    );
+}
+
+/**
+ * Define our shortcodes and their titles, descriptions, and callback functions
+ *
+ * See comments below for explanation
+ */
+function imageshortcode_shortcode_info()
+{
+    $shortcodes['image'] = array(
+        // The title of this shortcode, displayed in the Drupal backend for administrators to enable/disable shortcodes for input types
+        'title' => t('Media image embed'),
+        
+        // Description shown along with the title in the Drupal backend
+        'description' => t('Embed a media image into a blog post text.'),
+        
+        // Custom function that deals with the variables and html output
+        'process callback' => 'imageshortcode_image'
+    );
+
+    return $shortcodes;
+}
+
+/**
+ * Define our process callback function for the shortcode. This
+ * takes in our shortcode attributes from the shortcode and if empty, sets the property
+ * to the default value stated in this function.  We then pass in our attributes to the
+ * theme() function which outputs the HTML.
+ *
+ * $attrs = shortcode_attrs(array(
+ *     'attribute' => 'default_value_goes_here'
+ * ),
+ */
+function imageshortcode_image($attrs, $text)
+{
+    $attrs = shortcode_attrs(
+        array(
+            'alt' => '',
+            'title' => '',
+            'align' => imageshortcode_default_image_alignment(),
+            'imagestyle' => imageshortcode_default_image_style()
+        ),
+        $attrs
+    );
+    
+    $file = file_load($text);
+    if ($file === false) {
+        watchdog(
+            'imageshortcode',
+            'Cannot find media to embed as shortcode.'
+        );
+        return '';
+    }
+    
+    if ($file->filemime != 'image/jpeg') {
+        watchdog(
+            'imageshortcode',
+            'Media shortcode embed is not an image.'
+        );
+        return '';
+    }
+
+    if ($attrs['align'] != '' && in_array($attrs['align'], array('left', 'right'))) {
+        $attrs['align'] = 'pull-' . $attrs['align'];
+    } else {
+        $attrs['align'] = '';
+    }
+    
+    return theme(
+        'imageshortcode_image',
+        array(
+            'image' => $file,
+            'alt' => $attrs['alt'],
+            'title' => $attrs['title'],
+            'align' => $attrs['align'],
+            'imagestyle' => $attrs['imagestyle']
+        )
+    );
+}
+
+/**
+ * Return the default image style
+ * 
+ * @return string
+ */
+function imageshortcode_default_image_style()
+{
+    return 'large';
+}
+
+/**
+ * Return the default image alignment
+ * 
+ * @return string
+ */
+function imageshortcode_default_image_alignment()
+{
+    return 'left';
+}
